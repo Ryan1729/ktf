@@ -1,5 +1,7 @@
 # Known Typo Fixer (KTF)
 
+[![Rust](https://github.com/Ryan1729/ktf/actions/workflows/rust.yml/badge.svg)](https://github.com/Ryan1729/ktf/actions/workflows/rust.yml)
+
 ## Overall Goal
 
 Have a spellchecking program that makes sense to run in CI or similar scenarios, like git hooks.
