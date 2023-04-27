@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+atomicwrites = "0.4.1"
 grep = "0.2.11"
 ignore = "0.4.20"
 
