@@ -147,13 +147,19 @@ fn main() {
     
             let mut line = String::with_capacity(128);
             if let Ok(_) = cursor.read_line(&mut line) {
+                assert!(!typo_list.is_empty());
                 for typo in typo_list.iter() {
                     loop {
-                        match typo.line_number.cmp(&line_number) {
+                        match line_number.cmp(&typo.line_number) {
                             Ordering::Equal => {
                                 // TODO do the fix by writing the part before the 
                                 // typo, the fix, then the rest of the line;
                                 file.write(line.as_bytes())?;
+                                line_number += 1;
+                                line.clear();
+                                let Ok(_) = cursor.read_line(&mut line) else {
+                                    panic!("We ran out of lines but stil have a typo for {} left?!", path.display());
+                                };
                                 break
                             }
                             Ordering::Less => {
@@ -171,10 +177,16 @@ fn main() {
                     }
                 }
 
+                // We might have read 0 bytes the last time we read a line. But if
+                // so, then writing 0 bytes isn't an issue.
+                file.write(line.as_bytes())?;
+
                 line.clear();
-                while let Ok(_) = cursor.read_line(&mut line) {
+                while let Ok(n) = cursor.read_line(&mut line) {
                     file.write(line.as_bytes())?;
+
                     line.clear();
+                    if n == 0 { break }
                 }
 
                 Ok(())
