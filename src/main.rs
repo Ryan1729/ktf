@@ -15,6 +15,7 @@ use std::{
 mod known_typos;
 use known_typos::{FIXES, TYPOS};
 
+#[derive(Debug)]
 struct Typo {
     /// Index into `TYPOS` and `FIXES`.
     index: usize,
@@ -104,7 +105,7 @@ fn main() {
                                 vec.insert(insert_index, typo);
                             }
                         }
-                        
+
                         break
                     }
                 }
@@ -143,18 +144,53 @@ fn main() {
             atomicwrites::OverwriteBehavior::AllowOverwrite,
         ).write(|file| {
             let mut cursor = Cursor::new(&string);
-            let mut line_number = 0;
-    
+            // The lines we get from the searcher start at 1.
+            let mut line_number = 1;
+
             let mut line = String::with_capacity(128);
             if let Ok(_) = cursor.read_line(&mut line) {
                 assert!(!typo_list.is_empty());
-                for typo in typo_list.iter() {
+
+                let mut typo_i = 0;
+                while typo_i < typo_list.len() {
+                    let first_typo = &typo_list[typo_i];
+                    let mut one_past_last_same_line = typo_i + 1;
+
                     loop {
-                        match line_number.cmp(&typo.line_number) {
+                        if let Some(next_typo) = typo_list.get(one_past_last_same_line) {
+                            if first_typo.line_number == next_typo.line_number {
+                                one_past_last_same_line += 1;
+                                continue
+                            }
+                        }
+                        break
+                    }
+
+                    let same_line_slice = &typo_list[typo_i..one_past_last_same_line];
+                    let Some(first_typo) = same_line_slice.get(0) else {
+                        panic!("same_line_slice was empty!");
+                    };
+
+                    loop {
+                        match line_number.cmp(&first_typo.line_number) {
                             Ordering::Equal => {
-                                // TODO do the fix by writing the part before the 
-                                // typo, the fix, then the rest of the line;
-                                file.write(line.as_bytes())?;
+                                // A byte index from the start of the line.
+                                let mut wrote_to = 0;
+                                for typo in same_line_slice {
+                                    let start = typo.line_match.start();
+
+                                    if wrote_to < start {
+                                        file.write(&(line.as_bytes())[wrote_to..start])?;
+                                        wrote_to = start;
+                                    }
+
+                                    let fix = FIXES[typo.index];
+                                    file.write(fix.as_bytes())?;
+
+                                    wrote_to += TYPOS[typo.index].len();
+                                }
+                                file.write(&(line.as_bytes())[wrote_to..])?;
+
                                 line_number += 1;
                                 line.clear();
                                 let Ok(_) = cursor.read_line(&mut line) else {
@@ -171,10 +207,12 @@ fn main() {
                                 };
                             }
                             Ordering::Greater => {
-                                panic!("We already went past line {} in {} already?!", typo.line_number, path.display());
+                                panic!("We already went past line {} in {} already?!", first_typo.line_number, path.display());
                             }
                         }
                     }
+
+                    typo_i = one_past_last_same_line;
                 }
 
                 // We might have read 0 bytes the last time we read a line. But if
@@ -198,7 +236,10 @@ fn main() {
         if let Err(err) = write_result {
             eprintln!("ERROR @ {}:{} : {}", file!(), line!(), err);
             continue
+        } else {
+            let count = typo_list.len();
+            let suffix = if count == 1 { "" } else { "s" };
+            println!("Fixed {count} typo{suffix} in {} successfully", path.display());
         };
-        println!("\n{}:\n{}", path.display(), string);
     }
 }
