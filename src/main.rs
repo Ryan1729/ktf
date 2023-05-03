@@ -65,6 +65,10 @@ fn main() {
         builder
         .add_custom_ignore_filename(".ktfignore")
         .skip_stdout(true);
+
+    let mut files_searched_total = 0;
+    let mut fixed_total = 0;
+
     for walk_result in builder.build() {
         let entry = match walk_result {
             Ok(entry) => entry,
@@ -126,6 +130,8 @@ fn main() {
         if let Err(err) = search_result {
             eprintln!("ERROR @ {}:{} : {}", file!(), line!(), err);
         }
+
+        files_searched_total += 1;
     }
 
     for (path, typo_list) in typos {
@@ -240,6 +246,12 @@ fn main() {
             let count = typo_list.len();
             let suffix = if count == 1 { "" } else { "s" };
             println!("Fixed {count} typo{suffix} in {} successfully", path.display());
+
+            fixed_total += count;
         };
     }
+
+    let files_searched_suffix = if files_searched_total == 1 { "" } else { "s" };
+    let fixed_suffix = if fixed_total == 1 { "" } else { "s" };
+    println!("\nFound and fixed {fixed_total} typo{fixed_suffix} total in {files_searched_total} file{files_searched_suffix} successfully.");
 }
