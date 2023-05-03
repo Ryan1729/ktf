@@ -83,10 +83,9 @@ fn main() {
             let match_result: Result<_, grep::matcher::NoError> = matcher.find_iter(line.as_bytes(), |line_match| {
                 let found_typo: &str = &line[line_match];
 
-                // TODO maintain TYPOS in sorted order so we can
-                // binary search instead.
-                for (index, &typo_str) in TYPOS.iter().enumerate() {
-                    if found_typo == typo_str {
+                // Assumes that we have maintained TYPOS in sorted order.
+                match TYPOS.binary_search(&found_typo) {
+                    Ok(index) => {
                         let vec = typos.entry(path.to_owned())
                             .or_insert_with(|| Vec::with_capacity(16));
 
@@ -105,8 +104,9 @@ fn main() {
                                 vec.insert(insert_index, typo);
                             }
                         }
-
-                        break
+                    }
+                    Err(_) => {
+                        panic!("Did not find typo ({found_typo}) that was returned in match?!");
                     }
                 }
 

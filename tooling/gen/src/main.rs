@@ -14,22 +14,72 @@ mod typo_fix_pairs {
         ) => {
             const LENGTH: usize = {
                 let mut length = 0;
-    
+
                 $(
                     // Use $typo just so we can use the repetion to do the counting.
                     let _ = $typo;
                     length += 1;
                 )*
-    
+
                 length
             };
-    
-            // TODO sort these at compile time.
-            const TYPO_FIX_PAIRS: [(&str, &str); LENGTH] = [
-                $(
-                    ($typo, $fix),
-                )*
-            ];
+
+            const TYPO_FIX_PAIRS: [(&str, &str); LENGTH] = {
+                let mut pairs = [
+                    $(
+                        ($typo, $fix),
+                    )*
+                ];
+
+                const fn typo_greater_than(a: (&str, &str), b: (&str, &str)) -> bool {
+                    let left = a.0.as_bytes();
+                    let right = b.0.as_bytes();
+                    let short_len = {
+                        let mut l = left.len();
+                        if right.len() < l {
+                            l = right.len();
+                        }
+                        l
+                    };
+
+                    let mut i = 0;
+                    while i < short_len {
+                        if left[i] != right[i] {
+                            return left[i] > right[i]
+                        }
+                        i += 1;
+                    }
+
+                    left.len() > right.len()
+                }
+
+                // An insertion sort.
+                let mut index = 1;
+                while index < pairs.len() {
+                    let pair = pairs[index];
+
+                    // Shift things up to make room for `pair`
+                    let mut sorted_part_index = index.checked_sub(1);
+                    while let Some(spi) = sorted_part_index {
+                        if typo_greater_than(pairs[spi], pair) {
+                            pairs[spi + 1] = pairs[spi];
+                            sorted_part_index = spi.checked_sub(1);
+                        } else {
+                            break
+                        }
+                    }
+
+                    let pair_index = match sorted_part_index {
+                        Some(spi) => spi + 1,
+                        None => 0,
+                    };
+                    pairs[pair_index] = pair;
+
+                    index += 1;
+                }
+
+                pairs
+            };
         }
     }
 
