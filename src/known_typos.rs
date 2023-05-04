@@ -5,13 +5,19 @@
 const LENGTH: usize = 3;
 
 pub const TYPOS: [&str; LENGTH] = [
+    "Can;t",
     "can;t",
+    "Don;t",
     "don;t",
+    "Won;t",
     "won;t",
 ];
 
 pub const FIXES: [&str; LENGTH] = [
+    "Can't",
     "can't",
+    "Don't",
     "don't",
+    "Won't",
     "won't",
 ];
