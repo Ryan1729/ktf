@@ -2,6 +2,8 @@ typo_fix_pairs! {
     ("don;t", "don't"),
     ("won;t", "won't"),
     ("can;t", "can't"),
+    ("repetion", "repetition"),
+    ("preferrable", "preferable"),
 }
 
 // Wrapped in a module so we can put the invocation above the macro definition,
@@ -16,7 +18,7 @@ mod typo_fix_pairs {
                 let mut length = 0;
 
                 $(
-                    // Use $typo just so we can use the repetion to do the counting.
+                    // Use $typo just so we can use the repetition to do the counting.
                     let _ = $typo;
                     length += 1;
                 )*
