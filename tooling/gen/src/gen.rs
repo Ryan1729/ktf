@@ -2,8 +2,33 @@ typo_fix_pairs! {
     "don;t" -> "don't",
     "won;t" -> "won't",
     "can;t" -> "can't",
+    "shouldn;t" -> "shouldn't"
     "repetion" -> "repetition",
     "preferrable" -> "preferable",
+    "pythoin" -> "python"
+    "jsut" -> "just"
+    "reasonalbe" -> "reasonable"
+    "becasue" ->"because"
+    // The space is intended to avoid mangling references to Tehran, for example.
+    "teh " -> "the "
+    // More commonly seen as "THe", but this should generate that correction
+    "tHe" -> "the"
+    "verison" -> "version"
+    "dispaly" -> "display"
+    "witohut" -> "without"
+    "dleted" -> "deleted"
+    "whoel" -> "whole"
+    "inviations" -> "invitations"
+    "addiitonal" -> "additional"
+    "prinout" -> "printout"
+    "enviroment" -> "environment"
+    "seeminglt" -> "seemingly"
+    "taht" -> "that"
+    "expectred" -> "expected"
+    "orgnaization" -> "organization"
+    "pemissions" -> "permissions"
+    "potition" -> "position"
+    "tpye" -> "type"
 }
 
 // Wrapped in a module so we can put the invocation above the macro definition,
