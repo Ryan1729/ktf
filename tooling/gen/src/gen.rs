@@ -1,9 +1,9 @@
 typo_fix_pairs! {
-    ("don;t", "don't"),
-    ("won;t", "won't"),
-    ("can;t", "can't"),
-    ("repetion", "repetition"),
-    ("preferrable", "preferable"),
+    "don;t" -> "don't",
+    "won;t" -> "won't",
+    "can;t" -> "can't",
+    "repetion" -> "repetition",
+    "preferrable" -> "preferable",
 }
 
 // Wrapped in a module so we can put the invocation above the macro definition,
@@ -12,7 +12,7 @@ mod typo_fix_pairs {
     #[macro_export]
     macro_rules! typo_fix_pairs {
         (
-            $( ( $typo: literal , $fix: literal $(,)? ) $(,)? )+
+            $( $typo: literal -> $fix: literal $(,)? )+
         ) => {
             const LENGTH: usize = {
                 let mut length = 0;
