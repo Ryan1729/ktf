@@ -90,31 +90,72 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         UppercaseFirst,
     }
 
-    let sorted_typo_fixes = {
-        let mut typo_fixes = Vec::with_capacity(
+    let unrendered_typo_fixes = {
+        let mut unrendered_typo_fixes = Vec::with_capacity(
             UNNORMALIZED_TYPO_FIX_PAIRS.len() * 2
         );
 
         for (typo, fix) in UNNORMALIZED_TYPO_FIX_PAIRS {
             // Uppercase comes first in ASCII, so put it in the list first.
-            typo_fixes.push(
+            unrendered_typo_fixes.push(
                 // If this uppercasing turns out to be undesirable in some cases
                 // later, we can add a set of flags to each pair, indicating what
                 // options should be pushed.
                 (typo, fix, Transform::UppercaseFirst)
             );
 
-            typo_fixes.push((typo, fix, Transform::NoChange));
+            unrendered_typo_fixes.push((typo, fix, Transform::NoChange));
         }
 
-        // We rely on this sort being stable to put the first one only if we ever do
-        // have any duplicates! Having an addition at the end be a no-op seems
-        // preferable to potentially different behavior across gen runs with
+        // We rely on this sort being stable so we get the first one only, if we
+        // ever do have any duplicates! Having an addition at the end be a no-op
+        // seems preferable to potentially different behavior across gen runs with
         // different stdlib versions or whatever.
-        typo_fixes.sort_by_key(|tuple| tuple.0);
-        typo_fixes.dedup_by_key(|tuple| (tuple.0, tuple.2));
-        typo_fixes
+        unrendered_typo_fixes.sort_by_key(|tuple| tuple.0);
+        unrendered_typo_fixes.dedup_by_key(|tuple| (tuple.0, tuple.2));
+
+        unrendered_typo_fixes
     };
+
+    let sorted_typo_fixes = {
+        // Since the transforms can and do change the order of the typos when
+        // rendered, we must render them before sorting.
+        let mut rendered_typo_fixes =
+            Vec::with_capacity(unrendered_typo_fixes.len());
+
+        for (typo, fix, transform) in unrendered_typo_fixes.iter() {
+            match transform {
+                Transform::NoChange => {
+                    rendered_typo_fixes.push((
+                        format!("{typo}"),
+                        format!("{fix}"),
+                    ));
+                }
+                Transform::UppercaseFirst => {
+                    rendered_typo_fixes.push((
+                        format!("{}", UppercaseFirst(typo)),
+                        format!("{}", UppercaseFirst(fix)),
+                    ));
+                }
+            }
+        }
+
+        rendered_typo_fixes.sort_by_key(|tuple| tuple.0.clone());
+        rendered_typo_fixes.dedup_by_key(|tuple| tuple.0.clone());
+
+        rendered_typo_fixes
+    };
+
+    // Assert that each element can be found by binary searching for the typo
+    // because the main code relys on being able to do that with the output TYPOS
+    // array.
+    for element in sorted_typo_fixes.iter() {
+        let outcome = sorted_typo_fixes.binary_search_by_key(
+            &element.0,
+            |tuple| tuple.0.clone()
+        );
+        assert!(outcome.is_ok(), "Expected Ok(_), got {outcome:?}");
+    }
 
     let length = sorted_typo_fixes.len();
 
@@ -128,15 +169,8 @@ const LENGTH: usize = {length};
 pub const TYPOS: [&str; LENGTH] = [
 "#)?;
 
-    for (typo, _, transform) in sorted_typo_fixes.iter() {
-        match transform {
-            Transform::NoChange => {
-                writeln!(file, "    \"{typo}\",")?;
-            }
-            Transform::UppercaseFirst => {
-                writeln!(file, "    \"{}\",", UppercaseFirst(typo))?;
-            }
-        }
+    for (typo, _) in sorted_typo_fixes.iter() {
+        writeln!(file, "    \"{typo}\",")?;
     }
 
     write!(file, r#"];
@@ -144,15 +178,8 @@ pub const TYPOS: [&str; LENGTH] = [
 pub const FIXES: [&str; LENGTH] = [
 "#)?;
 
-    for (_, fix, transform) in sorted_typo_fixes.iter() {
-        match transform {
-            Transform::NoChange => {
-                writeln!(file, "    \"{fix}\",")?;
-            }
-            Transform::UppercaseFirst => {
-                writeln!(file, "    \"{}\",", UppercaseFirst(fix))?;
-            }
-        }
+    for (_, fix) in sorted_typo_fixes.iter() {
+        writeln!(file, "    \"{fix}\",")?;
     }
 
     write!(file, r#"];
