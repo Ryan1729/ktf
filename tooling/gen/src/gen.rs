@@ -1,4 +1,6 @@
 typo_fix_pairs! {
+    "sicne" -> "since",
+    "chnage" -> "change",
     "don;t" -> "don't",
     "won;t" -> "won't",
     "can;t" -> "can't",
@@ -12,7 +14,7 @@ typo_fix_pairs! {
     // The space is intended to avoid mangling references to Tehran, for example.
     "teh " -> "the "
     // More commonly seen as "THe", but this should generate that correction
-    "tHe" -> "the"
+    "tHe " -> "the "
     "verison" -> "version"
     "dispaly" -> "display"
     "witohut" -> "without"
